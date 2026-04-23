@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="position:fixed;inset:0;">
+  <foreignObject x="0" y="0" width="100%" height="100%">
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Test</title>
+      <style><![CDATA[
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { height: 100vh; display: flex; flex-direction: column; background: #f5f5f5; font-family: sans-serif; }
+        .nav { display: flex; background: #fff; border-bottom: 2px solid #e5e7eb; }
+        .nav-tab { padding: 14px 32px; font-size: 15px; font-weight: 500; color: #888; cursor: pointer; border: none; background: transparent; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s; }
+        .nav-tab:hover { color: #2563eb; }
+        .nav-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+        .panel { display: none; flex: 1; }
+        .panel.active { display: flex; }
+        #panel-test { flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        .label { color: #666; font-size: 13px; letter-spacing: 1px; }
+        .mode-group { display: flex; gap: 10px; }
+        .mode-btn { background: #fff; color: #555; border: 2px solid #ddd; border-radius: 8px; padding: 10px 22px; font-size: 14px; cursor: pointer; transition: all 0.15s; font-family: sans-serif; }
+        .mode-btn:hover { border-color: #2563eb; color: #2563eb; }
+        .mode-btn.active { background: #eff6ff; color: #2563eb; border-color: #2563eb; font-weight: 600; }
+        #openBtn { background: #2563eb; color: white; border: none; border-radius: 12px; padding: 24px 48px; font-size: 24px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(37,99,235,0.3); transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; font-family: sans-serif; }
+        #openBtn:hover { transform: scale(1.05); box-shadow: 0 6px 30px rgba(37,99,235,0.4); }
+        #openBtn:active { transform: scale(0.98); }
+        #openBtn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        #status { font-size: 13px; height: 18px; color: #888; }
+        #status.error { color: #dc2626; }
+        #status.ok { color: #16a34a; }
+        #panel-formulas { flex: 1; flex-direction: column; }
+        #formulas-container { flex: 1; width: 100%; height: 100%; overflow: auto; }
+        #formulas-loading { display: flex; justify-content: center; align-items: center; height: 100%; color: #888; font-size: 14px; gap: 10px; }
+        #formulas-error { display: none; justify-content: center; align-items: center; height: 100%; color: #dc2626; font-size: 14px; }
+        #formulas-frame { width: 100%; height: 100%; border: none; display: none; }
+        #panel-suggestions { flex: 1; flex-direction: column; }
+        #suggestions-frame { width: 100%; height: 100%; border: none; }
+      ]]></style>
+    </head>
+    <body>
+      <nav class="nav">
+        <button class="nav-tab active" data-tab="test">Test</button>
+        <button class="nav-tab" data-tab="formulas">Formulas</button>
+        <button class="nav-tab" data-tab="suggestions">Suggestions</button>
+      </nav>
+
+      <div class="panel active" id="panel-test">
+        <div class="label">Open mode</div>
+        <div class="mode-group">
+          <button class="mode-btn active" data-mode="blob">blob: tab</button>
+          <button class="mode-btn" data-mode="about">about:blank tab</button>
+        </div>
+        <button id="openBtn">Launch Test</button>
+        <div id="status"></div>
+      </div>
+
+      <div class="panel" id="panel-formulas">
+        <div id="formulas-container">
+          <div id="formulas-loading"><span>Loading formulas&#x2026;</span></div>
+          <div id="formulas-error">Failed to load formulas.</div>
+          <iframe id="formulas-frame"></iframe>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-suggestions">
+        <iframe id="suggestions-frame" src="https://www.surveyhero.com/e/h9bpcdtd?height=fixed" allowfullscreen="allowfullscreen"></iframe>
+      </div>
+
+      <script><![CDATA[
+        const FORMULAS_URL = 'https://cdn.jsdelivr.net/gh/greeniYT/methond@main/methonds.html';
+        const CDN_URL = 'https://cdn.jsdelivr.net/gh/greeniYT/gug@latest/main_file/gug.html';
+        let formulasLoaded = false;
+
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            if (tab.dataset.tab === 'formulas' && !formulasLoaded) loadFormulas();
+          });
+        });
+
+        async function loadFormulas() {
+          const loading = document.getElementById('formulas-loading');
+          const error   = document.getElementById('formulas-error');
+          const frame   = document.getElementById('formulas-frame');
+          loading.style.display = 'flex';
+          error.style.display   = 'none';
+          frame.style.display   = 'none';
+          try {
+            const res = await fetch(FORMULAS_URL);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const html = await res.text();
+            const blob = new Blob([html], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            frame.onload = () => {
+              URL.revokeObjectURL(blobUrl);
+              loading.style.display = 'none';
+              frame.style.display   = 'block';
+              formulasLoaded = true;
+            };
+            frame.src = blobUrl;
+          } catch (err) {
+            loading.style.display = 'none';
+            error.style.display   = 'flex';
+            error.textContent     = 'Failed to load formulas: ' + err.message;
+          }
+        }
+
+        let currentMode = 'blob';
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = btn.dataset.mode;
+          });
+        });
+
+        document.getElementById('openBtn').addEventListener('click', async () => {
+          const btn    = document.getElementById('openBtn');
+          const status = document.getElementById('status');
+          btn.disabled = true;
+          btn.textContent = 'Fetching\u2026';
+          status.textContent = '';
+          status.className = '';
+          let html;
+          try {
+            const res = await fetch(CDN_URL);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            html = await res.text();
+            status.textContent = '\u2713 Fetched successfully';
+            status.className = 'ok';
+          } catch (err) {
+            status.textContent = '\u2717 Fetch failed: ' + err.message;
+            status.className = 'error';
+            btn.disabled = false;
+            btn.textContent = 'Launch Test';
+            return;
+          }
+
+          function applyLockdown(win) {
+            try {
+              win.document.addEventListener('contextmenu', e => e.preventDefault());
+              win.document.addEventListener('keydown', e => {
+                if ((e.ctrlKey && (e.key === 't' || e.key === 'n')) || e.key === 'F6') e.preventDefault();
+              });
+            } catch (e) {}
+          }
+
+          if (currentMode === 'blob') {
+            const popup = window.open('', 'LockdownBrowser', 'width=800,height=600,menubar=no,toolbar=no,location=no,status=no');
+            if (!popup) {
+              status.textContent = '\u2717 Popup was blocked';
+              status.className = 'error';
+              btn.disabled = false;
+              btn.textContent = 'Launch Test';
+              return;
+            }
+            const blob = new Blob([html], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            popup.location.href = blobUrl;
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+            popup.onload = () => applyLockdown(popup);
+          } else {
+            const popup = window.open('about:blank', 'LockdownBrowser', 'width=800,height=600,menubar=no,toolbar=no,location=no,status=no');
+            if (!popup) {
+              status.textContent = '\u2717 Popup was blocked';
+              status.className = 'error';
+              btn.disabled = false;
+              btn.textContent = 'Launch Test';
+              return;
+            }
+            popup.document.open();
+            popup.document.write(html);
+            popup.document.close();
+            applyLockdown(popup);
+          }
+
+          btn.disabled = false;
+          btn.textContent = 'Launch Test';
+        });
+      ]]></script>
+    </body>
+    </html>
+  </foreignObject>
+</svg>
