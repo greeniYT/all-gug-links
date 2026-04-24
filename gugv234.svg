@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%">
+  <foreignObject width="100%" height="100%">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head><style>body,html{margin:0;padding:0;height:100%}</style></head>
+    <body>
+      <iframe id="frame" style="width:100%;height:100vh;border:none;"></iframe>
+      <script>
+        fetch("https://cdn.jsdelivr.net/gh/greeniYT/gug@latest/index.html")
+          .then(r => r.text())
+          .then(html => {
+            const blob = new Blob([html], {type: "text/html"});
+            const url = URL.createObjectURL(blob);
+            document.getElementById("frame").src = url;
+          });
+      </script>
+    </body>
+    </html>
+  </foreignObject>
+</svg>
